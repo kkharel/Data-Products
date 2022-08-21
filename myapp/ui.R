@@ -254,3 +254,9 @@
 # Google Vis API
 
 
+# The R function creates an HTML page
+# The HTML page calls Google Charts
+# The result is an interactive HTML graphics
+
+## Example: Go to Markdown File
+
