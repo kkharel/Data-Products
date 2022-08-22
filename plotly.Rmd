@@ -1,0 +1,166 @@
+---
+title: "plotly"
+output: html_document
+---
+
+A basic scatterplot is easy to make, with the added benefit of tooltips that appear
+when your mouse hovers over each point. Specify a scatterplot by indicating
+`mode = "markers"`.
+
+```{r, eval = FALSE}
+library(plotly)
+plot_ly(mtcars, x = mtcars$wt, y = mtcars$mpg, mode = "markers")
+
+```
+
+
+```{r, echo = FALSE, message = FALSE}
+## Basic Scatterplot
+library(plotly)
+plot_ly(data = mtcars, x = mtcars$wt, y = mtcars$mpg, type = "scatter", mode = "markers")
+
+```
+
+
+```{r, echo=FALSE, message=FALSE}
+## Scatterplot Color
+plot_ly(data = mtcars, x = mtcars$wt, y = mtcars$mpg, type = "scatter", mode = "markers",
+        color = as.factor(mtcars$cyl))
+```
+
+
+```{r, eval = FALSE}
+# Continuous Color
+
+# Also can show continuous variables with color in scatterplots
+
+plot_ly(data = mtcars, x = mtcars$wt, y = mtcars$mpg, type = "scatter", mode = "markers",
+        color = mtcars$disp)
+```
+
+
+```{r, eval = FALSE}
+# Scatterplot Sizing
+
+# By specifying the size argument
+
+plot_ly(mtcars, x = mtcars$wt, y = mtcars$mpg, type =  "scatter", mode = "markers", color = as.factor(mtcars$cyl), size = mtcars$hp)
+
+```
+
+```{r, eval = FALSE}
+# 3D Scatterplot
+set.seed(2016-07-21)
+temp = rnorm(100, mean = 30, sd = 5)
+pressure = rnorm(100)
+dtime = 1:100
+plot_ly(x = temp, y = pressure, z = dtime, type = "scatter3d", mode = "markers", color = temp)
+```
+
+```{r, eval = FALSE, echo = FALSE, }
+## Line Graph
+
+# default option for plot_ly()
+
+data("airmiles")
+
+plot_ly(x = time(airmiles), y = airmiles, type = "scatter", mode = "lines") # time(airmiles) gives the time period associated with airmiles
+```
+
+
+```{r, eval = FALSE}
+
+# Multiple Line Graphs
+
+# Can show multiple lines by specifying the columns in the data frame that separates the lines
+
+library(plotly)
+library(tidyr)
+library(dplyr)
+data("EuStockMarkets")
+
+stocks = as.data.frame(EuStockMarkets) %>% #converting into data frame
+  gather(index, price) %>% #converting from short to long format time series data. check head of stocks. tidyr
+  mutate(time = rep(time(EuStockMarkets), 4)) # creates our time variable.
+
+plot_ly(stocks, x = stocks$time, y = stocks$price, color = stocks$index, type = "scatter", mode = "lines")
+
+```
+```{r}
+#histogram
+
+plot_ly(x = iris$Petal.Length, type = "histogram")
+```
+
+```{r}
+# boxplot
+
+plot_ly(iris, y = iris$Petal.Length, color = iris$Species, type = "box")
+```
+
+```{r}
+# HeatMap
+
+terrain1 = matrix(rnorm(100*100), nrow = 100, ncol = 100) # image. is matrix, intensity value for row/column combination. create 100 random normal with 100 rows and 100 columns.
+plot_ly(z = terrain1, type = "heatmap")
+
+```
+
+
+```{r}
+# 3d Surface
+
+# Creating moveable 3D surfaces with type = surface
+
+terrain2 = matrix(sort(rnorm(100*100)), nrow = 100, ncol = 100)
+plot_ly(z = terrain2, type = "surface")
+```
+
+```{r, echo = FAlSE, message=FALSE}
+# Chloropeth Map
+
+library(datasets)
+# Create Data frame
+
+State = state.abb
+Pop  = as.vector(state.x77[,1])
+state_pop = as.data.frame(x = state.abb, y = as.vector(state.x77[,1]))
+
+# Create Hover Text
+
+state_pop$hover = with(state_pop, paste(State, '<br>', "Population:", Pop))
+
+# Make state borders red
+borders = list(color = toRGB("red"))
+
+# Setting up mapping options 
+
+map_options = list(
+  scope = 'usa',
+  projection = list(type = 'albert usa'),
+  showlakes = TRUE,
+  lakecolor = toRGB('white')
+)
+
+plot_ly(state_pop, z = Pop, text = state_pop$hover, locations = State, 
+        type = 'choropleth', locationmode = 'USA-states',
+        color = Pop, colors = 'Blues', marker = list(line = borders)) %>%
+  layout(title = 'US Population in 1975', geo = map_options)
+```
+
+```{r}
+# ggplot
+
+library(ggplot2)
+
+d = diamonds[sample(nrow(diamonds), 1000), ]
+
+p  = ggplot(data = d, aes(x = carat, y = price)) +
+  geom_point(aes(text = paste("Clarity:", clarity)), size = 4) +
+  geom_smooth(aes(colour = cut, fill = cut)) +
+  facet_wrap(~ cut)
+
+(gg = ggplotly(p))
+```
+
+
