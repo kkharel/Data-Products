@@ -1,0 +1,12 @@
+---
+title: "Exploration"
+author: "Kushal Kharel"
+date: "8/27/2022"
+output: ioslides_presentation
+---
+
+## My new Slide
+
+```{r, echo = FALSE, fig,align = 'center', fig.cap='My Awesome Fig'}
+plot(mtcars$wt, mtcars$mpg, xlab = "Weight", ylab = "MPG")
+```
