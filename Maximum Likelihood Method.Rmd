@@ -1,0 +1,315 @@
+---
+title: "Maximum Likelihood Estimation"
+author: "Kushal Kharel"
+date: "9/11/2022"
+output:
+  slidy_presentation: default
+  ioslides_presentation: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+## Background
+
+- How do we infer sample data to population parameters? One way is to use maximum
+likelihood estimation method.
+
+- Let us consider a set of observations $y_1, y_2, ..., y_n$, the likelihood function $L$
+is the join probability density of obtaining the data that are actually observed.
+
+- It is considered as a function of unknown parameters with the observed data held fixed.
+
+- The maximum likelihood estimators are those values of the parameters for which the data
+actually observed are most likely. In other words, the values that maximizes the likelihood function.
+
+## Background
+
+- We have i.i.d sample of data, assuming that the data is generated from some parametric
+density function or the probability mass function which is indexed by parameter $\theta$.
+
+- Then we construct a likelihood function using the assumption that the data are iid which
+is simply the product of density or pmf evaluated at each sample data points $y_i$.
+
+- We take the log of that function simply because it is computationally easier among other reasons.
+
+- We may have infinite number of possible parameter values, and we want to choose the one
+that best fits the data. In order to do this, we need to maximize the log likelihood
+function.
+
+## Generating data
+
+```{r, include=TRUE, message=FALSE, warning=FALSE, echo = TRUE}
+library(dplyr)
+library(plotly)
+N = 1000
+beta = 5
+sigma_2 = 5
+X = rnorm(N, 0, 5)
+Z = rnorm(N, 0, sqrt(sigma_2))
+Y = beta*X + Z
+
+DT = data.table::data.table(X, Y, Z)
+head(DT)
+```
+
+## Kernel density Estimation
+
+- a non-parametric method to estimate the probability density function of a random variable based on kernels as weights
+
+- provides a way to see the shape of data
+
+```{r, message=FALSE, warning=FALSE, echo = FALSE}
+library(MASS)
+library(plotly)
+kd <- with(DT, kde2d(X, Y, n = 50))
+fig <- plot_ly(x = kd$x, y = kd$y, z = kd$z) %>% add_surface()
+fig
+```
+
+
+
+## Deriving the log likelihood function
+
+```{r, message=FALSE, warning=FALSE, echo = TRUE}
+log_like = function(theta, Y, X) {
+  X = as.matrix(X)
+  Y = as.matrix(Y)
+  N = nrow(X)
+  beta = theta[1]
+  sigma_2 = theta[2]
+  e = Y - beta*X
+  log_lik = -0.5*N*log(2*pi) - 0.5*N*log(sigma_2) - ((t(e) %*% e)/(2*sigma_2))
+  return(-log_lik)
+}
+```
+
+
+## Deriving log likelihood values
+
+```{r, message=FALSE, warning=FALSE, echo = TRUE}
+log_like_plot = function(beta, sigma_2) {
+  X = as.matrix(DT$X)
+  Y = as.matrix(DT$Y)
+  N = nrow(X)
+  e = Y - beta*X
+  log_lik = -0.5*N*log(2*pi) - 0.5*N*log(sigma_2) - ((t(e) %*% e)/(2*sigma_2))
+  return(log_lik)
+
+}
+```
+
+## Vectorizing log likelihood values
+
+```{r, message=FALSE, warning=FALSE, echo = TRUE}
+log_like_plot = Vectorize(log_like_plot)
+beta_vals= seq(-10,10,by=1)
+sigma_2_vals = seq(1,10,by=1)
+log_vals = outer(beta_vals, sigma_2_vals,log_like_plot)
+```
+
+## Plotting log likelihood function
+
+```{r, message=FALSE, warning=FALSE, echo = FALSE}
+library(plotly)
+fig <- plot_ly(
+  type = 'surface',
+  contours = list(
+    x = list(show = TRUE, start = 1.5, end = 2, size = 0.04, color = 'white'),
+    z = list(show = TRUE, start = 0.5, end = 0.8, size = 0.05)),
+  x = ~beta_vals,
+  y = ~sigma_2_vals,
+  z = ~log_vals)
+fig <- fig %>% layout(
+  scene = list(
+    xaxis = list(nticks = 20),
+    zaxis = list(nticks = 4),
+    camera = list(eye = list(x = 0, y = -1, z = 0.5)),
+    aspectratio = list(x = .9, y = .8, z = 0.2)))
+
+fig
+
+```
+
+## Plotting log likelihood function
+
+- The surface in the plot summarizes all the log likelihood values for different
+beta and sigma values and what we want to do is find the values of beta and sigma
+squared that hits the highest part of the surface. 
+- In other words, we want to get different combination of beta and sigma squared values that maximizes the log likelihood function.
+
+## Finding MLE Estimates
+
+```{r, message=FALSE, warning=FALSE, echo = TRUE}
+library(knitr)
+
+MLE_Estimates = optim(fn = log_like,
+                      par = c(1,1),
+                      lower = c(-Inf, -Inf),
+                      upper = c(Inf, Inf),
+                      hessian = TRUE,
+                      method = "L-BFGS-B",
+                      Y = DT$Y,
+                      X = DT$X
+                      )
+```
+
+## Examining Estimates
+
+```{r, message=FALSE, warning=FALSE, echo = TRUE}
+MLE_par = MLE_Estimates$par
+MLE_SE = sqrt(diag(solve(MLE_Estimates$hessian)))
+MLE = data.table::data.table(param = c("beta", "sigma_2"),
+                             estimates = MLE_par,
+                             sd = MLE_SE)
+kable(MLE)
+```
+
+- We can see that MLE for beta is close to the true value of beta but sigma squared is quite far away and standard deviation is also quite large
+
+## Deriving likelihood values
+
+```{r, message=FALSE, warning=FALSE, echo = TRUE}
+log_like_plot_beta = function(beta) {
+  sigma_2 = MLE_par[2]
+  X = as.matrix(DT$X)
+  Y = as.matrix(DT$Y)
+  N = nrow(X)
+  e = Y - beta*X
+  log_lik = -0.5*N*log(2*pi) - 0.5*N*log(sigma_2) - ((t(e) %*% e)/(2*sigma_2))
+  return(-log_lik)
+}
+
+```
+
+## Deriving likelihood values
+
+```{r, message=FALSE, warning=FALSE, echo = TRUE}
+log_like_plot_sigma2 = function(sigma_2) {
+  beta = MLE_par[1]
+  X = as.matrix(DT$X)
+  Y = as.matrix(DT$Y)
+  N = nrow(X)
+  e = Y - beta*X
+  log_lik = -0.5*N*log(2*pi) - 0.5*N*log(sigma_2) - ((t(e) %*% e)/(2*sigma_2))
+  return(log_lik)
+}
+```
+
+## Vectorizing Estimates
+
+```{r, message=FALSE, warning=FALSE, echo = TRUE}
+log_like_plot_beta = Vectorize(log_like_plot_beta)
+log_like_plot_sigma2 = Vectorize(log_like_plot_sigma2)
+```
+
+
+## Plotting beta
+
+```{r,message=FALSE, warning=FALSE, echo = FALSE}
+beta = ggplot(data = data.frame(beta= 0), mapping = aes(beta = beta)) +
+  stat_function(fun = log_like_plot_beta) + theme_bw() + xlab("beta") + ylab("log_like")
+beta
+```
+
+## Plotting Sigma Squared 
+
+```{r, message=FALSE, warning=FALSE, echo = FALSE}
+sigma2 = ggplot(data = data.frame(sigma2= 0), mapping = aes(sigma2 = sigma2)) +
+  stat_function(fun = log_like_plot_sigma2) + theme_bw() + xlab("beta") + ylab("log_like")
+sigma2
+```
+
+## Binomial Model
+
+- Suppose we have a binomial distribution for N independent bernoulli trials (e.g.,
+coin flips, success or failure etc). There is a probability function that links
+the number of successes and the probability associated with it.
+- The probability function gives the probability of data, given a specific parameter.
+- Let's see the barplot for probability function where N = 25 trials and fixed parameter
+theta = 0.5. In each of these 25 trials, the probability of landing heads is 50%.
+
+## Density Plot
+
+```{r, message=FALSE, warning=FALSE, echo = FALSE}
+fig <- plot_ly(
+  x = 0:25,
+  y = dbinom(0:25, size = 25, prob = 0.5),
+  name = "density",
+  type = "bar",
+)
+fig <- fig %>% layout(title = "Density",
+                      xaxis = list(title = 'x'),
+                      yaxis = list(title = 'p(x)'), barmode = 'stack')
+
+
+fig
+```
+
+## Plot Summary
+- The plot represents the probability of getting each possible number of heads
+in 25 outcomes.We can see that most of the occurences are between 12 and 15.
+- The most probable outcome is 12 and 13.
+- It tells the probability of each discrete outcome.
+
+
+## Binomial Model in action
+
+- There is a likelihood function that gives the likelihood of a range of parameters,
+given a specific data point. 
+- Now, our input is parameters instead of data, this is called  likelihood function.
+
+## Binomial Example
+
+- Suppose we observe ten successes in 25 trials. Here we are not asking
+about the probability of 10 successes but instead asking what is the parameter that
+would have given us 10 successes.
+
+- Let us see the plot explained above. Suppose that in the sequence of 25 coin flips,
+we observe 10 successes(heads). 
+- What is the maximum likelihood estimate for theta? Assume binomial model.
+
+## Defining likelihood function
+
+```{r, message=FALSE, warning=FALSE, echo = TRUE}
+negative_log_likelihood_binom = function(data, par) {
+  return(-log(dbinom(data, size = 25, prob = par)))
+}
+
+
+```
+
+## Finding parameters that maximizes the likelihood function
+
+```{r, message=FALSE, warning=FALSE, echo = TRUE}
+optim(par = 0.5, fn = negative_log_likelihood_binom, data = 10)
+theta = seq(from = 0, to = 1, by = 0.01)
+```
+
+## Plotting likelihood
+
+```{r, message=FALSE, warning=FALSE, echo = FALSE}
+
+fig <- plot_ly(
+  x = theta,
+  y = dbinom(x=10, size = 25, prob = theta),
+  name = "likelihood",
+  type = "scatter",
+  mode = "lines"
+)
+fig <- fig %>% layout(title = "Theta vs Likelihood",
+                      xaxis = list(title = 'theta'),
+                      yaxis = list(title = 'likelihood'))
+
+
+fig
+```
+
+## Summary
+
+- The plot is telling us that the likelihood of observing 10 successes over the
+range of possible values of theta. We can see from the plot, as theta approaches
+0.4, the likelihood goes up. 
+- We can ask the question that what value of theta is most likely, given the data we observed?
+- We can see that our optimized parameter MLE = par = 0.4.
