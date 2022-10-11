@@ -49,3 +49,24 @@ install.packages("shinythemes")
 
 ?sidebarPanel
 ?add_histogram
+
+
+f <- function(x){
+  ifelse((x<1 & x>-1), 0.5*cos(abs(x)), 0)
+}
+
+rf.reject <- function(n) {
+  M <- 0.22
+  results <- numeric()
+  while (length(results) < n) {
+    X <- runif(2*(n - length(results)), min = -1, max = 1)
+    Y <- M*runif(length(X))*1
+    keep <- Y < f(X)
+    results <- c(results, X[keep])
+  }
+  results[1:n]
+}
+
+hist(rf.reject(1000000), prob=TRUE, breaks = "Scott" )
+curve(f(x), add=TRUE, col="red")
+

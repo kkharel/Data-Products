@@ -13,18 +13,23 @@ shinyUI(
              tabPanel(
                "Inverse - Transform Sampling",
                sidebarLayout(
-                 sidebarPanel( width = 3,
+                 fluidRow(
+                   shiny::column(offset = 1,
+                   width = 3,
                    sliderInput("Simulations",
                                "Number of Simulations",
                                min = 0,
                                max = 100000,
-                               value = 500),
+                               value = 5000,
+                               animate = TRUE
+                               ),
                    sliderInput("lambda",
                                " Rate parameter (lambda)",
                                min = 0,
                                max = 1,
-                               value = 0.5)
-                 ),
+                               value = 0.5,
+                               animate = TRUE)
+                 )),
                  mainPanel(
                    plotlyOutput("distPlot"),
                    withMathJax(
@@ -48,7 +53,7 @@ shinyUI(
                               $$P(U \\leq T^{-1}(x))$$
                               What is the probability that the uniform distribution is less than
                               or equals to some value \\(T^{-1}(x)\\)? In other words, what is the probability that
-                              uniform distribution is behind the range \\([0, T^{-1}(x)]\\)? Let us think for a second?
+                              uniform distribution is behind the range \\([0, T^{-1}(x)]\\)?
                               What is the probability of the area being behind \\(T^{-1}(x)\\) = \\(0.25\\). It is \\(0.25\\)
                               because of nice characteristic of uniform distribution (it is uniform all across)'),
                      helpText('Hence,
@@ -64,8 +69,8 @@ shinyUI(
                               $$-\\frac{ln(1-y)}{\\lambda} = x$$'),
                      helpText('Let us replace \\(y\\) with \\(u\\).
                               $$-\\frac{ln(1-u)}{\\lambda} = x$$
-                              Since uniform distribution is symmetric, we can slightly
-                              optimize the above result. Hence:
+                              Since uniform distribution is symmetric,
+                              we can re-write as
                               $$X = -\\frac{ln(U)}{\\lambda}$$'),
                      helpText('Note: We need cdf in order to apply this method')
 
@@ -76,6 +81,5 @@ shinyUI(
                  fluid = TRUE
                )
              ),
-             tabPanel("Accept - Reject Sampling"),
-             tabPanel("Metropolis Hastings"))
+             tabPanel("Thank you!"))
 )
