@@ -1,0 +1,91 @@
+---
+title: "GoogleVis"
+output: html_document
+runtime: shiny
+---
+
+```{r gv, results = "asis, cache = TRUE}
+
+# M = gvisMotionChart(Fruits, idvar = "Fruit", timevar = "Year",
+#                     options = list(width = 600, height = 400)) # creating gvis motion chart
+# 
+# print(M, "chart")
+
+suppressPackageStartupMessages(library(plotly))
+Fruits %>%   plot_ly(
+    x = ~Fruit,
+    y = ~Profit,
+    frame = ~Year,
+    type = 'bar',
+    showlegend = F
+)
+```
+
+
+```{r}
+#plot on Maps
+G = gvisGeoChart(Exports, locationvar = "Country",
+                 colorvar = "Profit", options = list(width = 2000, height = 1000))
+print(G , "chart")
+```
+
+
+```{r}
+# Specifying a region 
+
+G2 = gvisGeoChart(Exports, locationvar = "Country",
+                  colorvar = "Profit", options = list(width = 600, height = 400, region = "150"))
+
+print(G2, "chart")
+```
+
+
+
+```{r}
+# Setting More Options
+
+# Finding parameters to set under 'options'
+
+df = data.frame(label = c("US", "GB", "BR"), val1 = c(1,3,4), val2 = c(23,12,32))
+
+Line = gvisLineChart(df, xvar = "label", yvar = c("val1","val2"),
+                     options = list(title = "Hello World", legend = "bottom",
+                                    titleTextStyle = "{color:'red', fontsize:18",
+                                    vAxis = "{gridlines:{color:'red', count:3}}",
+                                    haxis = "{title:'My Label', titleTextStyle:{color:'blue'}}",
+                                    series = "[{color:'green', targetAxisIndex: 0},
+                                               {color: 'blue', targetAxisIndex: 1}]",
+                                    vAxes = "[{titlw:'Value 1 (%)', format:'##,######%'},
+                                                        {title:'Value 2 (\U00A3)'}]",
+                                    curveType = "function", width=500, height = 300
+                                    ))
+print(Line, "chart")
+# plot(Line)
+```
+
+
+```{r}
+#Combining Multiple Plots Together
+
+G = gvisGeoChart(Exports, locationvar = "Country",
+                 colorvar = "Profit", options = list(width = 600, height = 400))
+T1 = gvisTable(Exports, options = list(width = 200, height = 270))
+M = gvisMotionChart(Fruits, idvar = "Fruit", timevar = "Year",
+                    options = list(width = 600, height = 400)) # creating gvis motion chart
+
+GT = gvisMerge(G, T1, horizontal = FALSE)
+GTM = gvisMerge(GT, M, horizontal = TRUE, tableOptions = "bgcolor=\"#CCCCCC\" cellspacing=10")
+
+print(GTM, "chart")
+
+# plot(GTM)
+```
+
+
+```{r, dependson="multipleplot", results = "asis", cache=TRUE}
+# combining multiple plots together
+print(GTM, "chart")
+plot(GTM)
+
+```
+
