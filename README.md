@@ -14,5 +14,4 @@ User can change the number of simulations and rate parameter to see how we can g
 
 Select the number of simulations, also select the rate parameter if to see how simulations change with increasing rate and increasing simulations
 
-
-
+The codes and learning material comes from Johns Hopkins University, Data Products Coursera Class.
